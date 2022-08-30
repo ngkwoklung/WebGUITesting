@@ -1,43 +1,47 @@
 package com.sparta.jn.web_gui_testing;
 
+import com.google.common.base.Function;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.*;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.FluentWait;
-import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.support.ui.Wait;
 
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 public class HackerNewsTests {
     static WebDriver driver;
-    static FluentWait wait;
+    static Wait<WebDriver> wait;
 
     @BeforeAll
     static void setupAll() {
         System.setProperty("webdriver.chrome.driver", "src/test/resources/chromedriver.exe");
         driver = new ChromeDriver();
-        wait = new FluentWait(driver);
+        wait = new FluentWait<WebDriver>(driver)
+                .withTimeout(Duration.ofSeconds(10))
+                .pollingEvery(Duration.ofSeconds(1))
+                .ignoring(NoSuchElementException.class);
+
     }
 
     @BeforeEach
     void setup() {
         driver.get("https://news.ycombinator.com/");
-        wait.withTimeout(Duration.ofSeconds(5));
-        wait.pollingEvery(Duration.ofSeconds(1));
-        wait.ignoring(NoSuchElementException.class);
-//        wait.until(ExpectedConditions.;
+//        wait.withTimeout(Duration.ofSeconds(5));
+//        wait.pollingEvery(Duration.ofSeconds(1));
+//        wait.ignoring(NoSuchElementException.class);
+//        wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.tagName("body")));
     }
 
     @Test
     @DisplayName("Check that we are on the HN homepage")
     void checkThatWeAreOnTheHnHomepage() {
         Assertions.assertEquals("https://news.ycombinator.com/", driver.getCurrentUrl());
+//        System.out.println(driver.findElement(By.tagName("body")).getText());
     }
 
     @Test
@@ -99,7 +103,20 @@ public class HackerNewsTests {
     @Test
     @DisplayName("Check that after more articles start from 31")
     void checkThatAfterMoreArticlesStartFrom31() {
+        WebElement element = wait.until(new Function<WebDriver, WebElement>() {
+            @Override
+            public WebElement apply(WebDriver webDriver) {
+                WebElement webElement = driver.findElement(By.className("rank"));
+
+                if(webElement.isDisplayed()) {
+                    System.out.println("isDisblayed");
+                }
+                return webElement;
+            }
+        });
+
         driver.findElement(By.linkText("More")).click();
+
         List<WebElement> links = driver.findElements(By.className("rank"));
         Assertions.assertEquals("31.", links.get(0).getText());
     }
